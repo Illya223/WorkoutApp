@@ -46,6 +46,15 @@ fun ProgressScreen(
     val workouts = workoutState.value
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     val modifier: Modifier = Modifier
+
+    val validWorkouts = workouts.filter {
+        try {
+            LocalDate.parse(it.date)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
     Column(modifier = modifier.padding(16.dp)) {
         TopAppBar(
             title = { Text("Workout Progress") },
@@ -57,7 +66,7 @@ fun ProgressScreen(
         )
 
         WeeklyWorkoutSummary(
-            workouts = workouts,
+            workouts = validWorkouts,
             modifier = Modifier.fillMaxWidth()
         ) { clickedDate ->
             selectedDate = clickedDate
@@ -73,7 +82,7 @@ fun ProgressScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            val workoutsOnSelectedDate = workouts.filter {
+            val workoutsOnSelectedDate = validWorkouts.filter {
                 LocalDate.parse(it.date) == date
             }
 

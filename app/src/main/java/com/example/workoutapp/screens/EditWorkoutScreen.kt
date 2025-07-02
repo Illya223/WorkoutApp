@@ -30,6 +30,7 @@ import androidx.navigation.NavController
 import com.example.workoutapp.viewmodel.WorkoutViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.workoutapp.DatePickerDialog
 import com.example.workoutapp.WorkoutNameDropdown
@@ -47,21 +48,20 @@ fun EditWorkoutScreen(
     val workoutState = viewModel.getWorkoutById(workoutId).collectAsState(initial = null)
     val workout = workoutState.value
 
-    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+
     var showDatePicker by remember { mutableStateOf(false) }
-    var duration by remember { mutableStateOf("") }
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-
-    var name by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var name by remember(workout) { mutableStateOf(workout?.name ?: "") }
+    var duration by remember(workout) { mutableStateOf(workout?.durationMinutes?.toString() ?: "") }
     val workoutNames = listOf("Push-ups","Pull-ups","Crunches", "Squats", "Running", "Plank", "Bench Press")
-
-    LaunchedEffect(workout) {
-        if (workout != null) {
-            name = workout.name
-            date = workout.date
-        }
+    var selectedDate by remember(workout) {
+        mutableStateOf(
+            workout?.date?.let { LocalDate.parse(it) }
+        )
     }
+
+
 
     Column(modifier = Modifier.padding(16.dp)) {
         TopAppBar(
@@ -105,12 +105,25 @@ fun EditWorkoutScreen(
 
         Button(
             onClick = {
-                val updatedWorkout = workout?.copy(name = name, date = selectedDate?.format(dateFormatter) ?: "N/A")
-                if (updatedWorkout != null) {
-                    viewModel.updateWorkout(updatedWorkout)
-                    navController.popBackStack() // go back after save
-                }
-            },
+                val parsedDuration = duration.toIntOrNull() ?: 0
+                if (name.isBlank()) {
+                    errorMessage = "Please select a workout name."
+                } else if (selectedDate == null) {
+                    errorMessage = "Please select a date."
+                } else if (duration.isBlank() || duration.toIntOrNull() == null) {
+                    errorMessage = "Please enter a valid duration."
+                } else {
+                    errorMessage = null
+                    val updatedWorkout = workout?.copy(
+                        name = name,
+                        date = selectedDate?.format(dateFormatter) ?: "N/A",
+                        durationMinutes = parsedDuration
+                    )
+                    if (updatedWorkout != null) {
+                        viewModel.updateWorkout(updatedWorkout)
+                        navController.popBackStack() // go back after save
+                    }
+                }},
             modifier = Modifier.align(Alignment.End)
         ) {
             Text("Save")
@@ -122,6 +135,14 @@ fun EditWorkoutScreen(
                     selectedDate = newDate
                     showDatePicker = false
                 }
+            )
+        }
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage ?: "",
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
     }

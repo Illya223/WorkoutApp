@@ -35,6 +35,8 @@ fun WorkoutDetailScreen(navController: NavHostController, workoutId: Int,
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Workout: ${workout.name}", style = MaterialTheme.typography.titleLarge)
                 Text("Date: ${workout.date}")
+                Text("Duration: ${workout.durationMinutes} minutes")
+                Text(" ${workout} ")
             }
         } else {
             Text("Loading...")

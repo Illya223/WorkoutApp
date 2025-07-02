@@ -24,7 +24,7 @@ fun WorkoutNameDropdown(
         modifier = modifier
     ) {
         TextField(
-            value = selectedText,
+            value = selectedName,
             onValueChange = {
                 selectedText = it
                 onNameSelected(it) // live update to parent

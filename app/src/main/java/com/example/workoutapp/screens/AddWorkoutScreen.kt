@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -47,6 +48,7 @@ fun AddWorkoutScreen(navController: NavHostController,
     val workoutNames = listOf("Push-ups","Pull-ups","Crunches", "Squats", "Running", "Plank", "Bench Press")
     var duration by remember { mutableStateOf("") }
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -88,13 +90,23 @@ fun AddWorkoutScreen(navController: NavHostController,
 
             Button(
                 onClick = {
-                    val workout = Workout(
-                        name = workoutName,
-                        date = selectedDate?.format(dateFormatter) ?: "N/A"
-                    )
-                    viewModel.addWorkout(workout)
-                    navController.popBackStack()
-                },
+                    val parsedDuration = duration.toIntOrNull() ?: 0
+                    if (workoutName.isBlank()) {
+                        errorMessage = "Please select a workout name."
+                    } else if (selectedDate == null) {
+                        errorMessage = "Please select a date."
+                    } else if (duration.isBlank() || duration.toIntOrNull() == null) {
+                        errorMessage = "Please enter a valid duration."
+                    } else {
+                        errorMessage = null
+                        val workout = Workout(
+                            name = workoutName,
+                            date = selectedDate?.format(dateFormatter) ?: "N/A",
+                            durationMinutes = parsedDuration
+                        )
+                        viewModel.addWorkout(workout)
+                        navController.popBackStack()
+                    }},
                 modifier = Modifier.align(Alignment.End)
             ) {
                 Text("Save")
@@ -120,6 +132,14 @@ fun AddWorkoutScreen(navController: NavHostController,
                         selectedDate = newDate
                         showDatePicker = false
                     }
+                )
+            }
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage ?: "",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
         }
